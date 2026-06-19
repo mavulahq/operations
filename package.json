@@ -2,8 +2,8 @@
   "name": "@getfluxo/finfra",
   "version": "1.0.0",
   "description": "getfluxo.io Infrastructure Package - Docker, Kubernetes, Terraform, CI/CD",
-  "author": "Estandar Mustaq <estandarmustaq@getfluxo.io>",
-  "license": "PROPRIETARY",
+  "author": "EstandarMustaq <estandarmustaq@getfluxo.io>",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "scripts": {
     "docker:build": "bash docker/build.sh",
