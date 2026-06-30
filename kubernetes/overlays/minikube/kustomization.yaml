@@ -2,11 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: getfluxo
 resources:
-  - ../../namespace.yaml
-  - ../../service-fengine.yaml
-  - ../../service-fwk.yaml
-  - ../../deployment-fengine.yaml
-  - ../../deployment-fwk.yaml
+  - base/namespace.yaml
+  - base/service-fengine.yaml
+  - base/service-fwk.yaml
+  - base/deployment-fengine.yaml
+  - base/deployment-fwk.yaml
   - postgres.yaml
   - redis.yaml
 generatorOptions:
