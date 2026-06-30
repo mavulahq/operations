@@ -41,3 +41,39 @@ spec:
           annotations:
             summary: "fwk dead-letter queue has jobs"
             description: "Dead-letter jobs require operator review."
+
+        - alert: FwkPaymentProcessFailed
+          expr: fwk_payment_process_failed > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "fwk payment processes failed"
+            description: "Failed payment processes require reconciliation review."
+
+        - alert: FwkPaymentProcessExpired
+          expr: fwk_payment_process_expired > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "fwk payment processes expired"
+            description: "Expired payment processes require provider-state review."
+
+        - alert: FwkPaymentProcessCompensationRequired
+          expr: fwk_payment_process_compensation_required > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "fwk payment compensation required"
+            description: "Payment processes reached an inconsistent terminal state."
+
+        - alert: FwkPaymentOutboxBacklog
+          expr: fwk_payment_outbox_pending > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "fwk payment outbox backlog"
+            description: "Pending payment outbox events require publisher validation."
