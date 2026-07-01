@@ -45,9 +45,9 @@ for _ in $(seq 1 30); do
 done
 LOCAL_DATABASE_URL="postgresql://getfluxo:getfluxo_dev@127.0.0.1:$DATABASE_PORT/getfluxo?schema=public"
 DATABASE_URL="$LOCAL_DATABASE_URL" \
-  pnpm --dir "$ROOT_DIR" --filter @getfluxo/fpay exec prisma db push --schema prisma/schema.prisma --skip-generate
-DATABASE_URL="$LOCAL_DATABASE_URL" \
   pnpm --dir "$ROOT_DIR" --filter @getfluxo/fengine exec prisma db push --skip-generate
+DATABASE_URL="$LOCAL_DATABASE_URL" \
+  pnpm --dir "$ROOT_DIR" --filter @getfluxo/fpay --fail-if-no-match prisma:migrate
 kill "$FORWARD_PID" >/dev/null 2>&1 || true
 trap - EXIT
 
