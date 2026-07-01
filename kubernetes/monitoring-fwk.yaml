@@ -77,3 +77,21 @@ spec:
           annotations:
             summary: "fwk payment outbox backlog"
             description: "Pending payment outbox events require publisher validation."
+
+        - alert: FwkPaymentOutboxPublishingStalled
+          expr: fwk_payment_outbox_publishing > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "fwk payment outbox publisher stalled"
+            description: "Leased payment outbox events were not published within the expected window."
+
+        - alert: FwkPaymentOutboxFailed
+          expr: fwk_payment_outbox_failed > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "fwk payment outbox events failed"
+            description: "Payment settlement domain events reached terminal publication failure."
