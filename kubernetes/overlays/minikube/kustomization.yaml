@@ -24,7 +24,7 @@ secretGenerator:
     literals:
       - NODE_ENV=development
       - PORT=3010
-      - DATABASE_URL=postgresql://getfluxo:getfluxo_dev@postgres:5432/getfluxo?schema=public
+      - DATABASE_URL=postgresql://getfluxo:getfluxo_dev@postgres:5432/getfluxo?schema=fpay
       - REDIS_URL=redis://redis:6379
       - FWK_WORKER_ENABLED=true
       - FWK_SCHEDULER_ENABLED=true
