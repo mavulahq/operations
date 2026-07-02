@@ -31,6 +31,10 @@ secretGenerator:
       - FWK_QUEUES=payments,platform
       - FWK_PAYMENT_PROCESS_STORE=postgres
       - FPAY_SETTLEMENT_OUTBOX_ENABLED=false
+      - FPAY_OUTBOX_PUBLISHER_ENABLED=false
+      - FPAY_OUTBOX_PUBLISHER_POLL_MS=1000
+      - FPAY_OUTBOX_PUBLISHER_BATCH_SIZE=25
+      - FPAY_OUTBOX_PUBLISHER_LEASE_MS=30000
       - FPAY_RECONCILIATION_LIMIT=100
       - INTERNAL_API_KEY=minikube-internal-api-key-change-before-production
 images:
