@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: fengine
-  namespace: getfluxo
+  name: ledger-core
+  namespace: mavula
 spec:
   selector:
-    app: fengine
+    app: ledger-core
   ports:
     - name: http
       protocol: TCP

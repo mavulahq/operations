@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
-IMAGE_NAME=${IMAGE_NAME:-getfluxio/fengine}
+IMAGE_NAME=${IMAGE_NAME:-mavula/ledger-core}
 IMAGE_TAG=${IMAGE_TAG:-latest}
-DOCKERFILE=${DOCKERFILE:-"$ROOT_DIR/../fengine/Dockerfile"}
+DOCKERFILE=${DOCKERFILE:-"$ROOT_DIR/../ledger-core/Dockerfile"}
 CONTEXT_DIR=${CONTEXT_DIR:-"$ROOT_DIR/../.."}
 
 if [ ! -f "$DOCKERFILE" ]; then

@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: fwk
-  namespace: getfluxo
+  name: workbench
+  namespace: mavula
   labels:
-    app: fwk
+    app: workbench
 spec:
   selector:
-    app: fwk
+    app: workbench
   ports:
     - name: http
       protocol: TCP

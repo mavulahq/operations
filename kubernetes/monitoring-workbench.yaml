@@ -1,14 +1,14 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: fwk-metrics
-  namespace: getfluxo
+  name: workbench-metrics
+  namespace: mavula
   labels:
-    app: fwk
+    app: workbench
 spec:
   selector:
     matchLabels:
-      app: fwk
+      app: workbench
   endpoints:
     - port: metrics
       interval: 30s
@@ -17,81 +17,81 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: fwk-alerts
-  namespace: getfluxo
+  name: workbench-alerts
+  namespace: mavula
 spec:
   groups:
-    - name: fwk
+    - name: workbench
       interval: 30s
       rules:
         - alert: FwkWorkerDown
-          expr: fwk_worker_running == 0
+          expr: workbench_worker_running == 0
           for: 5m
           labels:
             severity: critical
           annotations:
-            summary: "fwk worker is down"
+            summary: "workbench worker is down"
             description: "Worker runtime has not reported a running state for 5 minutes."
 
         - alert: FwkDeadLetterBacklog
-          expr: fwk_queue_dead_letter > 0
+          expr: workbench_queue_dead_letter > 0
           for: 10m
           labels:
             severity: warning
           annotations:
-            summary: "fwk dead-letter queue has jobs"
+            summary: "workbench dead-letter queue has jobs"
             description: "Dead-letter jobs require operator review."
 
         - alert: FwkPaymentProcessFailed
-          expr: fwk_payment_process_failed > 0
+          expr: workbench_payment_process_failed > 0
           for: 10m
           labels:
             severity: warning
           annotations:
-            summary: "fwk payment processes failed"
+            summary: "workbench payment processes failed"
             description: "Failed payment processes require reconciliation review."
 
         - alert: FwkPaymentProcessExpired
-          expr: fwk_payment_process_expired > 0
+          expr: workbench_payment_process_expired > 0
           for: 10m
           labels:
             severity: warning
           annotations:
-            summary: "fwk payment processes expired"
+            summary: "workbench payment processes expired"
             description: "Expired payment processes require provider-state review."
 
         - alert: FwkPaymentProcessCompensationRequired
-          expr: fwk_payment_process_compensation_required > 0
+          expr: workbench_payment_process_compensation_required > 0
           for: 5m
           labels:
             severity: critical
           annotations:
-            summary: "fwk payment compensation required"
+            summary: "workbench payment compensation required"
             description: "Payment processes reached an inconsistent terminal state."
 
         - alert: FwkPaymentOutboxBacklog
-          expr: fwk_payment_outbox_pending > 0
+          expr: workbench_payment_outbox_pending > 0
           for: 15m
           labels:
             severity: warning
           annotations:
-            summary: "fwk payment outbox backlog"
+            summary: "workbench payment outbox backlog"
             description: "Pending payment outbox events require publisher validation."
 
         - alert: FwkPaymentOutboxPublishingStalled
-          expr: fwk_payment_outbox_publishing > 0
+          expr: workbench_payment_outbox_publishing > 0
           for: 10m
           labels:
             severity: warning
           annotations:
-            summary: "fwk payment outbox publisher stalled"
+            summary: "workbench payment outbox publisher stalled"
             description: "Leased payment outbox events were not published within the expected window."
 
         - alert: FwkPaymentOutboxFailed
-          expr: fwk_payment_outbox_failed > 0
+          expr: workbench_payment_outbox_failed > 0
           for: 5m
           labels:
             severity: critical
           annotations:
-            summary: "fwk payment outbox events failed"
+            summary: "workbench payment outbox events failed"
             description: "Payment settlement domain events reached terminal publication failure."

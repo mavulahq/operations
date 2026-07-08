@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fengine
-  namespace: getfluxo
+  name: ledger-core
+  namespace: mavula
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: fengine
+      app: ledger-core
   template:
     metadata:
       labels:
-        app: fengine
+        app: ledger-core
     spec:
       initContainers:
         - name: wait-for-platform-dependencies
@@ -21,13 +21,13 @@ spec:
             - -c
             - until nc -z postgres 5432 && nc -z redis 6379; do sleep 2; done
       containers:
-        - name: fengine
-          image: getfluxio/fengine:latest
+        - name: ledger-core
+          image: mavula/ledger-core:latest
           ports:
             - containerPort: 3000
           envFrom:
             - secretRef:
-                name: fengine-secrets
+                name: ledger-core-secrets
           livenessProbe:
             httpGet:
               path: /api/health

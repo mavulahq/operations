@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# getfluxo.io - Deployment & Infrastructure
-# Copyright (c) 2026 getfluxo.io
-# License: PROPRIETARY
+# mavula.io - Deployment & Infrastructure
+# Copyright (c) 2026 mavula.io
+# SPDX-License-Identifier: Apache-2.0
 
 set -euo pipefail
 
@@ -19,22 +19,22 @@ fi
 
 if [ "$APPLY_EXTERNAL_SECRETS" = "true" ]; then
   "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/secrets-external.yaml"
-elif ! "${KUBECTL[@]}" get secret fengine-secrets -n getfluxo >/dev/null 2>&1; then
-  echo "Warning: fengine-secrets not found. Run scripts/setup-secrets.sh or set APPLY_EXTERNAL_SECRETS=true."
+elif ! "${KUBECTL[@]}" get secret ledger-core-secrets -n mavula >/dev/null 2>&1; then
+  echo "Warning: ledger-core-secrets not found. Run scripts/setup-secrets.sh or set APPLY_EXTERNAL_SECRETS=true."
 fi
 
-if ! "${KUBECTL[@]}" get secret fwk-secrets -n getfluxo >/dev/null 2>&1; then
-  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/fwk-secret.yaml"
+if ! "${KUBECTL[@]}" get secret workbench-secrets -n mavula >/dev/null 2>&1; then
+  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/workbench-secret.yaml"
 fi
 
-"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-fengine.yaml"
-"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-fwk.yaml"
-"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-fengine.yaml"
-"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-fwk.yaml"
+"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-ledger-core.yaml"
+"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-workbench.yaml"
+"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-ledger-core.yaml"
+"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-workbench.yaml"
 
 if [ "$APPLY_MONITORING" = "true" ]; then
-  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/monitoring-fengine.yaml"
-  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/monitoring-fwk.yaml"
+  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/monitoring-ledger-core.yaml"
+  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/monitoring-workbench.yaml"
 fi
 
 echo "Kubernetes manifests applied. To provision cloud infra, run:"

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-NAMESPACE=${NAMESPACE:-getfluxo}
-APP_LABEL=${APP_LABEL:-fengine}
+NAMESPACE=${NAMESPACE:-mavula}
+APP_LABEL=${APP_LABEL:-ledger-core}
 KUBE_CONTEXT=${KUBE_CONTEXT:-}
 
 KUBECTL=(kubectl)
