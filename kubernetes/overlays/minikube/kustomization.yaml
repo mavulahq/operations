@@ -1,51 +1,51 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: getfluxo
+namespace: mavula
 resources:
   - base/namespace.yaml
-  - base/service-fengine.yaml
-  - base/service-fwk.yaml
-  - base/deployment-fengine.yaml
-  - base/deployment-fwk.yaml
+  - base/service-ledger-core.yaml
+  - base/service-workbench.yaml
+  - base/deployment-ledger-core.yaml
+  - base/deployment-workbench.yaml
   - postgres.yaml
   - redis.yaml
 generatorOptions:
   disableNameSuffixHash: true
 secretGenerator:
-  - name: fengine-secrets
+  - name: ledger-core-secrets
     literals:
       - NODE_ENV=development
       - PORT=3000
-      - DATABASE_URL=postgresql://getfluxo:getfluxo_dev@postgres:5432/getfluxo?schema=public
+      - DATABASE_URL=postgresql://mavula:mavula_dev@postgres:5432/mavula?schema=public
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=minikube-development-secret-change-before-production
       - INTERNAL_API_KEY=minikube-internal-api-key-change-before-production
-  - name: fwk-secrets
+  - name: workbench-secrets
     literals:
       - NODE_ENV=development
       - PORT=3010
-      - DATABASE_URL=postgresql://getfluxo:getfluxo_dev@postgres:5432/getfluxo?schema=fpay
+      - DATABASE_URL=postgresql://mavula:mavula_dev@postgres:5432/mavula?schema=settlements
       - REDIS_URL=redis://redis:6379
-      - FWK_WORKER_ENABLED=true
-      - FWK_SCHEDULER_ENABLED=true
-      - FWK_QUEUES=payments,platform
-      - FWK_PAYMENT_PROCESS_STORE=postgres
-      - FPAY_SETTLEMENT_OUTBOX_ENABLED=false
-      - FPAY_OUTBOX_PUBLISHER_ENABLED=false
-      - FPAY_OUTBOX_PUBLISHER_POLL_MS=1000
-      - FPAY_OUTBOX_PUBLISHER_BATCH_SIZE=25
-      - FPAY_OUTBOX_PUBLISHER_LEASE_MS=30000
-      - FPAY_RECONCILIATION_LIMIT=100
+      - WORKBENCH_WORKER_ENABLED=true
+      - WORKBENCH_SCHEDULER_ENABLED=true
+      - WORKBENCH_QUEUES=payments,platform
+      - WORKBENCH_PAYMENT_PROCESS_STORE=postgres
+      - SETTLEMENTS_OUTBOX_ENABLED=false
+      - SETTLEMENTS_OUTBOX_PUBLISHER_ENABLED=false
+      - SETTLEMENTS_OUTBOX_PUBLISHER_POLL_MS=1000
+      - SETTLEMENTS_OUTBOX_PUBLISHER_BATCH_SIZE=25
+      - SETTLEMENTS_OUTBOX_PUBLISHER_LEASE_MS=30000
+      - SETTLEMENTS_RECONCILIATION_LIMIT=100
       - INTERNAL_API_KEY=minikube-internal-api-key-change-before-production
 images:
-  - name: getfluxio/fengine
+  - name: mavula/ledger-core
     newTag: minikube
-  - name: getfluxio/fwk
+  - name: mavula/workbench
     newTag: minikube
 patches:
   - target:
       kind: Deployment
-      name: fengine
+      name: ledger-core
     patch: |-
       - op: replace
         path: /spec/replicas
@@ -55,7 +55,7 @@ patches:
         value: IfNotPresent
   - target:
       kind: Deployment
-      name: fwk
+      name: workbench
     patch: |-
       - op: replace
         path: /spec/replicas

@@ -16,14 +16,14 @@ provider "aws" {
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
   tags = {
-    Name = "getfluxo-vpc"
+    Name = "mavula-vpc"
   }
 }
 
 # EKS cluster placeholder
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  cluster_name    = "getfluxo-eks"
+  cluster_name    = "mavula-eks"
   cluster_version = var.eks_version
   vpc_id          = aws_vpc.main.id
   # Additional configuration omitted: workers, node_groups, iam

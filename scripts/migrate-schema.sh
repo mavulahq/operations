@@ -6,5 +6,5 @@ cd "$ROOT_DIR"
 
 PNPM_BIN=${PNPM_BIN:-"$HOME/.local/share/pnpm/pnpm"}
 
-PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @getfluxo/fpay prisma:migrate
-PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @getfluxo/fengine prisma:migrate
+PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/settlements prisma:migrate
+PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/ledger-core prisma:migrate

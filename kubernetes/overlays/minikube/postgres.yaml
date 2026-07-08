@@ -30,17 +30,17 @@ spec:
           image: postgres:16-alpine
           env:
             - name: POSTGRES_USER
-              value: getfluxo
+              value: mavula
             - name: POSTGRES_PASSWORD
-              value: getfluxo_dev
+              value: mavula_dev
             - name: POSTGRES_DB
-              value: getfluxo
+              value: mavula
           ports:
             - name: postgres
               containerPort: 5432
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "getfluxo", "-d", "getfluxo"]
+              command: ["pg_isready", "-U", "mavula", "-d", "mavula"]
             initialDelaySeconds: 5
             periodSeconds: 5
           volumeMounts:

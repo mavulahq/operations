@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# getfluxo.io - Secrets Management & Vault Integration
-# Copyright (c) 2026 getfluxo.io
-# License: PROPRIETARY
+# mavula.io - Secrets Management & Vault Integration
+# Copyright (c) 2026 mavula.io
+# SPDX-License-Identifier: Apache-2.0
 
 set -euo pipefail
 
-NAMESPACE=${NAMESPACE:-getfluxo}
+NAMESPACE=${NAMESPACE:-mavula}
 AWS_REGION=${AWS_REGION:-eu-west-1}
 ENVIRONMENT=${ENVIRONMENT:-staging}
 
@@ -29,7 +29,7 @@ spec:
     - secretsmanager:GetSecretValue
     - secretsmanager:DescribeSecret
   resources:
-    - 'arn:aws:secretsmanager:$AWS_REGION:*:secret:getfluxo/*'
+    - 'arn:aws:secretsmanager:$AWS_REGION:*:secret:mavula/*'
 EOF
 
 # Create External Secrets objects
@@ -52,7 +52,7 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: fengine-secrets
+  name: ledger-core-secrets
   namespace: $NAMESPACE
 spec:
   refreshInterval: 1h
@@ -60,29 +60,29 @@ spec:
     name: aws-secrets-manager
     kind: SecretStore
   target:
-    name: fengine-secrets
+    name: ledger-core-secrets
     creationPolicy: Owner
   data:
     - secretKey: DATABASE_URL
       remoteRef:
-        key: getfluxo/fengine/database_url
+        key: mavula/ledger-core/database_url
     - secretKey: JWT_SECRET
       remoteRef:
-        key: getfluxo/fengine/jwt_secret
+        key: mavula/ledger-core/jwt_secret
     - secretKey: REDIS_URL
       remoteRef:
-        key: getfluxo/redis_url
+        key: mavula/redis_url
     - secretKey: COOKIE_DOMAIN
       remoteRef:
-        key: getfluxo/cookie_domain
+        key: mavula/cookie_domain
     - secretKey: INTERNAL_API_KEY
       remoteRef:
-        key: getfluxo/internal_api_key
+        key: mavula/internal_api_key
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: fwk-secrets
+  name: workbench-secrets
   namespace: $NAMESPACE
 spec:
   refreshInterval: 1h
@@ -90,20 +90,20 @@ spec:
     name: aws-secrets-manager
     kind: SecretStore
   target:
-    name: fwk-secrets
+    name: workbench-secrets
     creationPolicy: Owner
   data:
     - secretKey: DATABASE_URL
       remoteRef:
-        key: getfluxo/fengine/database_url
+        key: mavula/ledger-core/database_url
     - secretKey: REDIS_URL
       remoteRef:
-        key: getfluxo/redis_url
+        key: mavula/redis_url
     - secretKey: INTERNAL_API_KEY
       remoteRef:
-        key: getfluxo/internal_api_key
+        key: mavula/internal_api_key
 EOF
 
 echo "Secrets management configured. Verify in AWS Secrets Manager and k8s:"
-echo "  aws secretsmanager list-secrets --region $AWS_REGION --filters Key=name,Values=getfluxo"
-echo "  kubectl get secret -n $NAMESPACE fengine-secrets fwk-secrets"
+echo "  aws secretsmanager list-secrets --region $AWS_REGION --filters Key=name,Values=mavula"
+echo "  kubectl get secret -n $NAMESPACE ledger-core-secrets workbench-secrets"
