@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
+    "guardian:check": "node scripts/guardian.mjs",
     "docker:build": "bash docker/build.sh",
     "docker:push": "bash docker/push.sh",
     "dev:services:up": "docker compose --project-directory ../.. up -d postgres redis",

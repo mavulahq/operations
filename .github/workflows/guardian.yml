@@ -1,0 +1,36 @@
+name: MAVULA Guardian
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: operations-guardian-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guardian:
+    name: guardian
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.0
+      - name: Use Node.js 22.22.3
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.22.3
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Run guardian
+        run: pnpm guardian:check
+      - name: Validate Kubernetes manifests
+        run: kubectl kustomize kubernetes/overlays/minikube
