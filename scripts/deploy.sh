@@ -19,16 +19,18 @@ fi
 
 if [ "$APPLY_EXTERNAL_SECRETS" = "true" ]; then
   "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/secrets-external.yaml"
-elif ! "${KUBECTL[@]}" get secret ledger-core-secrets -n mavula >/dev/null 2>&1; then
-  echo "Warning: ledger-core-secrets not found. Run scripts/setup-secrets.sh or set APPLY_EXTERNAL_SECRETS=true."
+else
+  for secret_name in identity-access-secrets ledger-core-secrets workbench-secrets; do
+    if ! "${KUBECTL[@]}" get secret "$secret_name" -n mavula >/dev/null 2>&1; then
+      echo "Warning: $secret_name not found. Run scripts/setup-secrets.sh or set APPLY_EXTERNAL_SECRETS=true."
+    fi
+  done
 fi
 
-if ! "${KUBECTL[@]}" get secret workbench-secrets -n mavula >/dev/null 2>&1; then
-  "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/workbench-secret.yaml"
-fi
-
+"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-identity-access.yaml"
 "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-ledger-core.yaml"
 "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/service-workbench.yaml"
+"${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-identity-access.yaml"
 "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-ledger-core.yaml"
 "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/deployment-workbench.yaml"
 
