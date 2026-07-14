@@ -31,7 +31,7 @@ set +a
 
 required=(
   IDENTITY_DATABASE_URL IDENTITY_ISSUER IDENTITY_JWKS_JSON IDENTITY_COOKIE_KEYS
-  LEDGER_CORE_DATABASE_URL OIDC_AUTHORIZATION_ENDPOINT OIDC_JWKS_URI
+  LEDGER_CORE_DATABASE_URL LEDGER_CORE_DATABASE_ROLE_PASSWORD OIDC_AUTHORIZATION_ENDPOINT OIDC_JWKS_URI
   WORKBENCH_DATABASE_URL WORKBENCH_OIDC_CLIENT_ID WORKBENCH_PRIVATE_JWK_JSON OIDC_TOKEN_ENDPOINT
 )
 for variable_name in "${required[@]}"; do
@@ -132,8 +132,13 @@ DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?sch
   pnpm --dir "$ROOT_DIR" --filter @mavula/identity-access --fail-if-no-match prisma:migrate
 DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?schema=settlements" \
   pnpm --dir "$ROOT_DIR" --filter @mavula/settlements --fail-if-no-match prisma:migrate
-DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?schema=public" \
-  pnpm --dir "$ROOT_DIR" --filter @mavula/ledger-core exec prisma db push --skip-generate
+LEDGER_CORE_MIGRATION_DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?schema=public" \
+LEDGER_CORE_DATABASE_ROLE_PASSWORD="$LEDGER_CORE_DATABASE_ROLE_PASSWORD" \
+LEDGER_CORE_ACCEPT_BASELINE="${LEDGER_CORE_ACCEPT_BASELINE:-false}" \
+  pnpm --dir "$ROOT_DIR" --filter @mavula/ledger-core database:migrate
+LEDGER_CORE_MIGRATION_DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?schema=public" \
+LEDGER_CORE_DATABASE_ROLE_PASSWORD="$LEDGER_CORE_DATABASE_ROLE_PASSWORD" \
+  pnpm --dir "$ROOT_DIR" --filter @mavula/ledger-core database:provision-role
 kill "$FORWARD_PID" >/dev/null 2>&1 || true
 trap 'rm -rf "$secret_dir"' EXIT
 
