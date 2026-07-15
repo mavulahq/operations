@@ -30,4 +30,7 @@ databases without Prisma history are not adopted automatically; set
 `LEDGER_CORE_ACCEPT_BASELINE=true` only for the verified one-time baseline
 operation. Migration credentials are never injected into the runtime pod.
 
+`legacy-connectors` also uses a dedicated schema and restricted runtime role.
+Workbench executes it as a domain package; no separate deployment is created.
+
 License: Apache-2.0.
