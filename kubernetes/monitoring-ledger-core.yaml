@@ -16,7 +16,7 @@ spec:
   endpoints:
     - port: metrics
       interval: 30s
-      path: /metrics
+      path: /api/metrics
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -28,9 +28,10 @@ spec:
     - name: ledger-core
       interval: 30s
       rules:
-        - alert: FengineHighErrorRate
+        - alert: LedgerCoreHighErrorRate
           expr: |
-            rate(http_requests_total{job="ledger-core", status=~"5.."}[5m]) > 0.05
+            sum(rate(ledger_core_http_requests_total{status=~"5.."}[5m]))
+              / clamp_min(sum(rate(ledger_core_http_requests_total[5m])), 1) > 0.05
           for: 5m
           labels:
             severity: critical
@@ -38,9 +39,9 @@ spec:
             summary: "ledger-core high error rate (instance: {{ $labels.instance }})"
             description: "Error rate > 5% for 5 minutes. Current: {{ $value }}"
 
-        - alert: FengineSlowRequests
+        - alert: LedgerCoreSlowRequests
           expr: |
-            histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="ledger-core"}[5m])) > 1
+            histogram_quantile(0.99, sum by (le) (rate(ledger_core_http_request_duration_seconds_bucket[5m]))) > 1
           for: 5m
           labels:
             severity: warning
@@ -48,7 +49,7 @@ spec:
             summary: "ledger-core slow requests (instance: {{ $labels.instance }})"
             description: "p99 latency > 1s. Current: {{ $value }}s"
 
-        - alert: FengineHighMemory
+        - alert: LedgerCoreHighMemory
           expr: |
             container_memory_usage_bytes{pod=~"ledger-core-.*"} / container_spec_memory_limit_bytes > 0.8
           for: 5m
@@ -57,3 +58,48 @@ spec:
           annotations:
             summary: "ledger-core high memory (pod: {{ $labels.pod }})"
             description: "Memory usage > 80% of limit. Current: {{ $value | humanizePercentage }}"
+
+        - alert: LedgerCoreIdempotencyStoreUnavailable
+          expr: sum(rate(ledger_core_idempotency_requests_total{outcome="unavailable"}[5m])) > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ledger-core durable idempotency store unavailable"
+            description: "Public writes cannot guarantee durable idempotency. Current rate: {{ $value }}"
+
+        - alert: LedgerCoreIdempotencyConflictRate
+          expr: sum(rate(ledger_core_idempotency_requests_total{outcome="conflict"}[10m])) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ledger-core idempotency conflicts increased"
+            description: "Clients are reusing keys with different requests. Current rate: {{ $value }}"
+
+        - alert: LedgerCoreExpiredReceiptBacklog
+          expr: ledger_core_idempotency_receipts_expired > 500
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ledger-core expired receipt cleanup backlog"
+            description: "Expired receipts awaiting cleanup: {{ $value }}"
+
+        - alert: LedgerCoreTenantBoundaryFailures
+          expr: sum(rate(ledger_core_security_failures_total{boundary="tenant"}[5m])) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ledger-core tenant boundary failures increased"
+            description: "Tenant binding denials require investigation. Current rate: {{ $value }}"
+
+        - alert: LedgerCoreContractValidationFailures
+          expr: sum(rate(ledger_core_contract_validation_failures_total[10m])) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ledger-core public contract validation failures increased"
+            description: "Invalid public requests exceed the expected rate. Current: {{ $value }}"
