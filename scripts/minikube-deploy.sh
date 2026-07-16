@@ -33,6 +33,7 @@ required=(
   IDENTITY_DATABASE_URL IDENTITY_ISSUER IDENTITY_JWKS_JSON IDENTITY_COOKIE_KEYS
   LEDGER_CORE_DATABASE_URL LEDGER_CORE_DATABASE_ROLE_PASSWORD OIDC_AUTHORIZATION_ENDPOINT OIDC_JWKS_URI
   WORKBENCH_DATABASE_URL WORKBENCH_OIDC_CLIENT_ID WORKBENCH_PRIVATE_JWK_JSON OIDC_TOKEN_ENDPOINT
+  LEGACY_CONNECTORS_DATABASE_URL LEGACY_CONNECTORS_MIGRATION_DATABASE_URL LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD
 )
 for variable_name in "${required[@]}"; do
   if [ -z "${!variable_name:-}" ]; then
@@ -96,6 +97,7 @@ trap 'rm -rf "$secret_dir"' EXIT
 {
   printf 'NODE_ENV=development\nPORT=3010\n'
   printf 'DATABASE_URL=%s\n' "$WORKBENCH_DATABASE_URL"
+  printf 'LEGACY_CONNECTORS_DATABASE_URL=%s\n' "$LEGACY_CONNECTORS_DATABASE_URL"
   printf 'REDIS_URL=%s\n' "${REDIS_URL:-redis://redis:6379}"
   printf 'OIDC_ISSUER=%s\n' "$IDENTITY_ISSUER"
   printf 'OIDC_AUDIENCE=urn:mavula:workbench\n'
@@ -105,7 +107,8 @@ trap 'rm -rf "$secret_dir"' EXIT
   printf 'WORKBENCH_PRIVATE_JWK_JSON=%s\n' "$WORKBENCH_PRIVATE_JWK_JSON"
   printf 'LEDGER_CORE_AUDIENCE=urn:mavula:ledger-core\n'
   printf 'WORKBENCH_WORKER_ENABLED=true\nWORKBENCH_SCHEDULER_ENABLED=true\n'
-  printf 'WORKBENCH_QUEUES=payments,platform\nWORKBENCH_PAYMENT_PROCESS_STORE=postgres\n'
+  printf 'WORKBENCH_QUEUES=payments,platform,legacy\nWORKBENCH_PAYMENT_PROCESS_STORE=postgres\n'
+  printf 'WORKBENCH_LEGACY_BATCH_STORE=postgres\n'
   printf 'SETTLEMENTS_OUTBOX_ENABLED=false\nSETTLEMENTS_OUTBOX_PUBLISHER_ENABLED=false\n'
 } >"$secret_dir/workbench.env"
 chmod 600 "$secret_dir"/*.env
@@ -135,6 +138,11 @@ DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?sch
   pnpm --dir "$ROOT_DIR" --filter @mavula/identity-access --fail-if-no-match prisma:migrate
 DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?schema=settlements" \
   pnpm --dir "$ROOT_DIR" --filter @mavula/settlements --fail-if-no-match prisma:migrate
+DATABASE_URL="$LEGACY_CONNECTORS_MIGRATION_DATABASE_URL" \
+  pnpm --dir "$ROOT_DIR" --filter @mavula/legacy-connectors --fail-if-no-match prisma:migrate
+LEGACY_CONNECTORS_MIGRATION_DATABASE_URL="$LEGACY_CONNECTORS_MIGRATION_DATABASE_URL" \
+LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD="$LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD" \
+  pnpm --dir "$ROOT_DIR" --filter @mavula/legacy-connectors --fail-if-no-match database:provision-role
 LEDGER_CORE_MIGRATION_DATABASE_URL="postgresql://mavula:mavula_dev@127.0.0.1:$DATABASE_PORT/mavula?schema=public" \
 LEDGER_CORE_DATABASE_ROLE_PASSWORD="$LEDGER_CORE_DATABASE_ROLE_PASSWORD" \
 LEDGER_CORE_ACCEPT_BASELINE="${LEDGER_CORE_ACCEPT_BASELINE:-false}" \
