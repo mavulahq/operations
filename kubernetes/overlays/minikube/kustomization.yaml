@@ -3,41 +3,17 @@ kind: Kustomization
 namespace: mavula
 resources:
   - base/namespace.yaml
+  - base/service-identity-access.yaml
   - base/service-ledger-core.yaml
   - base/service-workbench.yaml
+  - base/deployment-identity-access.yaml
   - base/deployment-ledger-core.yaml
   - base/deployment-workbench.yaml
   - postgres.yaml
   - redis.yaml
-generatorOptions:
-  disableNameSuffixHash: true
-secretGenerator:
-  - name: ledger-core-secrets
-    literals:
-      - NODE_ENV=development
-      - PORT=3000
-      - DATABASE_URL=postgresql://mavula:mavula_dev@postgres:5432/mavula?schema=public
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=minikube-development-secret-change-before-production
-      - INTERNAL_API_KEY=minikube-internal-api-key-change-before-production
-  - name: workbench-secrets
-    literals:
-      - NODE_ENV=development
-      - PORT=3010
-      - DATABASE_URL=postgresql://mavula:mavula_dev@postgres:5432/mavula?schema=settlements
-      - REDIS_URL=redis://redis:6379
-      - WORKBENCH_WORKER_ENABLED=true
-      - WORKBENCH_SCHEDULER_ENABLED=true
-      - WORKBENCH_QUEUES=payments,platform
-      - WORKBENCH_PAYMENT_PROCESS_STORE=postgres
-      - SETTLEMENTS_OUTBOX_ENABLED=false
-      - SETTLEMENTS_OUTBOX_PUBLISHER_ENABLED=false
-      - SETTLEMENTS_OUTBOX_PUBLISHER_POLL_MS=1000
-      - SETTLEMENTS_OUTBOX_PUBLISHER_BATCH_SIZE=25
-      - SETTLEMENTS_OUTBOX_PUBLISHER_LEASE_MS=30000
-      - SETTLEMENTS_RECONCILIATION_LIMIT=100
-      - INTERNAL_API_KEY=minikube-internal-api-key-change-before-production
 images:
+  - name: mavula/identity-access
+    newTag: minikube
   - name: mavula/ledger-core
     newTag: minikube
   - name: mavula/workbench

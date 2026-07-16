@@ -17,5 +17,6 @@ fi
 
 bash "$ROOT_DIR/scripts/deploy.sh"
 
+NAMESPACE=mavula APP_LABEL=identity-access KUBE_CONTEXT="$KUBE_CONTEXT" bash "$ROOT_DIR/scripts/health-check.sh"
 NAMESPACE=mavula APP_LABEL=ledger-core KUBE_CONTEXT="$KUBE_CONTEXT" bash "$ROOT_DIR/scripts/health-check.sh"
 NAMESPACE=mavula APP_LABEL=workbench KUBE_CONTEXT="$KUBE_CONTEXT" bash "$ROOT_DIR/scripts/health-check.sh"

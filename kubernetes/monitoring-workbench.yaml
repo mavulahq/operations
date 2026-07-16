@@ -95,3 +95,39 @@ spec:
           annotations:
             summary: "workbench payment outbox events failed"
             description: "Payment settlement domain events reached terminal publication failure."
+
+        - alert: WorkbenchLegacyBatchBacklog
+          expr: workbench_queue_queued{queue="legacy"} > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "workbench legacy batch backlog"
+            description: "Legacy interoperability jobs have remained queued for 15 minutes."
+
+        - alert: WorkbenchLegacyBatchProcessingStalled
+          expr: workbench_legacy_batch_processing > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "workbench legacy batch processing is stalled"
+            description: "A leased legacy batch has remained in processing state beyond its expected execution window."
+
+        - alert: WorkbenchLegacyBatchRejected
+          expr: workbench_legacy_batch_rejected > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "workbench legacy batches rejected"
+            description: "Rejected legacy batches require compliance operator review."
+
+        - alert: WorkbenchLegacyBatchFailed
+          expr: workbench_legacy_batch_failed > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "workbench legacy batches failed"
+            description: "Legacy batches exhausted their processing attempts."

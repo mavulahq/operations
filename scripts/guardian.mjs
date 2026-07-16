@@ -36,6 +36,9 @@ if (pkg.author !== "EstandarMustaq <estandarmustaq@mavula.io>") {
   "LICENSE",
   "README.md",
   "kubernetes/overlays/minikube/kustomization.yaml",
+  "kubernetes/deployment-identity-access.yaml",
+  "kubernetes/service-identity-access.yaml",
+  "kubernetes/secrets-external.yaml",
   "docker/build.sh",
   "scripts/minikube-deploy.sh",
   "terraform/main.tf",
@@ -53,9 +56,29 @@ if (tracked.status !== 0) fail("git ls-files failed");
 for (const file of tracked.stdout.split("\n").filter(Boolean)) {
   if (/(^|\/)\.env($|\.(?!example$))/.test(file)) fail(`${file} must not be tracked`);
   if (file === "scripts/guardian.mjs") continue;
-  if (/getfluxo-io|@getfluxo|packages\/fengine|packages\/fwk|packages\/fpay|packages\/finfra/.test(read(file))) {
+  if (/getfluxo-io|@getfluxo|packages\/fengine|packages\/fwk|packages\/fpay|packages\/finfra|JWT_SECRET|INTERNAL_API_KEY/.test(read(file))) {
     fail(`${file} contains legacy public identifiers`);
   }
+}
+
+const minikubeDeploy = read("scripts/minikube-deploy.sh");
+if (!minikubeDeploy.includes('MINIKUBE_REBUILD_IMAGES:-false')) {
+  fail("Minikube image rebuilds must remain opt-in");
+}
+if (!minikubeDeploy.includes('MAVULA_ENV_FILE')) {
+  fail("Minikube deployment must load untracked local configuration");
+}
+for (const required of [
+  'LEGACY_CONNECTORS_DATABASE_URL',
+  'LEGACY_CONNECTORS_MIGRATION_DATABASE_URL',
+  'LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD',
+  'WORKBENCH_QUEUES=payments,platform,legacy',
+]) {
+  if (!minikubeDeploy.includes(required)) fail(`Minikube legacy runtime wiring missing: ${required}`);
+}
+const workbenchMonitoring = read('kubernetes/monitoring-workbench.yaml');
+for (const metric of ['workbench_legacy_batch_processing', 'workbench_legacy_batch_rejected', 'workbench_legacy_batch_failed']) {
+  if (!workbenchMonitoring.includes(metric)) fail(`Legacy batch alert missing: ${metric}`);
 }
 
 if (failures.length > 0) {

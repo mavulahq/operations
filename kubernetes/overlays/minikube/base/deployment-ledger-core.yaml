@@ -19,7 +19,7 @@ spec:
           command:
             - sh
             - -c
-            - until nc -z postgres 5432 && nc -z redis 6379; do sleep 2; done
+            - until nc -z postgres 5432 && nc -z redis 6379 && wget -q -O /dev/null http://identity-access/health; do sleep 2; done
       containers:
         - name: ledger-core
           image: mavula/ledger-core:latest

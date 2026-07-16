@@ -19,7 +19,7 @@ spec:
           command:
             - sh
             - -c
-            - until nc -z postgres 5432 && nc -z redis 6379 && wget -q -O /dev/null http://ledger-core/api/health; do sleep 2; done
+            - until nc -z postgres 5432 && nc -z redis 6379 && wget -q -O /dev/null http://identity-access/health && wget -q -O /dev/null http://ledger-core/api/health; do sleep 2; done
       containers:
         - name: workbench
           image: mavula/workbench:latest
@@ -39,7 +39,7 @@ spec:
             periodSeconds: 15
           readinessProbe:
             httpGet:
-              path: /api/status
+              path: /api/health
               port: 3010
             initialDelaySeconds: 10
             periodSeconds: 15
