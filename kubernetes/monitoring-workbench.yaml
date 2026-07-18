@@ -13,6 +13,9 @@ spec:
     - port: metrics
       interval: 30s
       path: /api/metrics
+      bearerTokenSecret:
+        name: workbench-metrics-secrets
+        key: WORKBENCH_METRICS_TOKEN
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule

@@ -39,6 +39,8 @@ if (pkg.author !== "EstandarMustaq <estandarmustaq@mavula.io>") {
   "kubernetes/deployment-identity-access.yaml",
   "kubernetes/service-identity-access.yaml",
   "kubernetes/secrets-external.yaml",
+  "kubernetes/ledger-core-metrics-secret.yaml",
+  "kubernetes/workbench-metrics-secret.yaml",
   "docker/build.sh",
   "scripts/minikube-deploy.sh",
   "terraform/main.tf",
@@ -65,20 +67,58 @@ const minikubeDeploy = read("scripts/minikube-deploy.sh");
 if (!minikubeDeploy.includes('MINIKUBE_REBUILD_IMAGES:-false')) {
   fail("Minikube image rebuilds must remain opt-in");
 }
+if (!minikubeDeploy.includes('MINIKUBE_LOAD_IMAGES:-false')) {
+  fail("Minikube image loading must remain opt-in");
+}
+if (/minikube start/.test(minikubeDeploy)) {
+  fail("Minikube deployment must not create or start a cluster implicitly");
+}
+if (!minikubeDeploy.includes('Dockerfile.workspace')) {
+  fail("Identity workspace builds must use Dockerfile.workspace");
+}
 if (!minikubeDeploy.includes('MAVULA_ENV_FILE')) {
   fail("Minikube deployment must load untracked local configuration");
 }
 for (const required of [
   'LEGACY_CONNECTORS_DATABASE_URL',
-  'LEGACY_CONNECTORS_MIGRATION_DATABASE_URL',
   'LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD',
+  'WORKBENCH_DATABASE_URL',
+  'WORKBENCH_DATABASE_ROLE_PASSWORD',
+  'SETTLEMENTS_DATABASE_URL',
+  'SETTLEMENTS_DATABASE_ROLE_PASSWORD',
+  'database:provision-role',
+  'WORKBENCH_METRICS_TOKEN',
+  'LEDGER_CORE_METRICS_TOKEN',
   'WORKBENCH_QUEUES=payments,platform,legacy',
 ]) {
   if (!minikubeDeploy.includes(required)) fail(`Minikube legacy runtime wiring missing: ${required}`);
 }
+if (!minikubeDeploy.includes('LOAD_IMAGES=true')) {
+  fail('Minikube rebuilds must automatically load rebuilt images into the selected profile');
+}
+if (read('kubernetes/ledger-core-secret.yaml').includes('LEDGER_CORE_METRICS_TOKEN')) {
+  fail('ledger-core runtime secret must not contain metrics scrape token');
+}
+if (read('kubernetes/workbench-secret.yaml').includes('WORKBENCH_METRICS_TOKEN')) {
+  fail('workbench runtime secret must not contain metrics scrape token');
+}
 const workbenchMonitoring = read('kubernetes/monitoring-workbench.yaml');
+if (!workbenchMonitoring.includes('bearerTokenSecret')) fail('Workbench metrics scraping must use a bearer token');
+if (workbenchMonitoring.includes('name: workbench-secrets')) {
+  fail('Workbench ServiceMonitor must not read the runtime secret');
+}
 for (const metric of ['workbench_legacy_batch_processing', 'workbench_legacy_batch_rejected', 'workbench_legacy_batch_failed']) {
   if (!workbenchMonitoring.includes(metric)) fail(`Legacy batch alert missing: ${metric}`);
+}
+const ledgerMonitoring = read('kubernetes/monitoring-ledger-core.yaml');
+if (!ledgerMonitoring.includes('bearerTokenSecret')) {
+  fail('Ledger-core metrics scraping must use a bearer token');
+}
+if (ledgerMonitoring.includes('name: ledger-core-secrets')) {
+  fail('Ledger-core ServiceMonitor must not read the runtime secret');
+}
+for (const required of ['ledger-core-metrics-secrets', 'workbench-metrics-secrets']) {
+  if (!read('kubernetes/secrets-external.yaml').includes(required)) fail(`ExternalSecret missing: ${required}`);
 }
 
 if (failures.length > 0) {

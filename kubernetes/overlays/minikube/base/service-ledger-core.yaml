@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: ledger-core
   namespace: mavula
+  labels:
+    app: ledger-core
 spec:
   selector:
     app: ledger-core

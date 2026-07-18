@@ -28,6 +28,8 @@ spec:
           envFrom:
             - secretRef:
                 name: ledger-core-secrets
+            - secretRef:
+                name: ledger-core-metrics-secrets
           livenessProbe:
             httpGet:
               path: /api/health
