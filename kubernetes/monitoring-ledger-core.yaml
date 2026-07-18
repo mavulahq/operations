@@ -1,6 +1,6 @@
 # mavula.io - Prometheus ServiceMonitor & Alerting Rules
-# Copyright (c) 2025 mavula.io
-# License: Proprietary - See LICENSE file
+# Copyright (c) 2025-2026 mavula.io
+# SPDX-License-Identifier: Apache-2.0
 
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -17,6 +17,9 @@ spec:
     - port: metrics
       interval: 30s
       path: /api/metrics
+      bearerTokenSecret:
+        name: ledger-core-secrets
+        key: LEDGER_CORE_METRICS_TOKEN
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -30,8 +33,11 @@ spec:
       rules:
         - alert: LedgerCoreHighErrorRate
           expr: |
-            sum(rate(ledger_core_http_requests_total{status=~"5.."}[5m]))
-              / clamp_min(sum(rate(ledger_core_http_requests_total[5m])), 1) > 0.05
+            (
+              sum(rate(ledger_core_http_requests_total{status=~"5.."}[5m]))
+                / sum(rate(ledger_core_http_requests_total[5m])) > 0.05
+            )
+            and sum(rate(ledger_core_http_requests_total[5m])) > 1
           for: 5m
           labels:
             severity: critical

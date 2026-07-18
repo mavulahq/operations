@@ -65,20 +65,37 @@ const minikubeDeploy = read("scripts/minikube-deploy.sh");
 if (!minikubeDeploy.includes('MINIKUBE_REBUILD_IMAGES:-false')) {
   fail("Minikube image rebuilds must remain opt-in");
 }
+if (!minikubeDeploy.includes('MINIKUBE_LOAD_IMAGES:-false')) {
+  fail("Minikube image loading must remain opt-in");
+}
+if (/minikube start/.test(minikubeDeploy)) {
+  fail("Minikube deployment must not create or start a cluster implicitly");
+}
+if (!minikubeDeploy.includes('Dockerfile.workspace')) {
+  fail("Identity workspace builds must use Dockerfile.workspace");
+}
 if (!minikubeDeploy.includes('MAVULA_ENV_FILE')) {
   fail("Minikube deployment must load untracked local configuration");
 }
 for (const required of [
   'LEGACY_CONNECTORS_DATABASE_URL',
-  'LEGACY_CONNECTORS_MIGRATION_DATABASE_URL',
   'LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD',
+  'WORKBENCH_DATABASE_URL',
+  'WORKBENCH_DATABASE_ROLE_PASSWORD',
+  'SETTLEMENTS_DATABASE_URL',
+  'WORKBENCH_METRICS_TOKEN',
+  'LEDGER_CORE_METRICS_TOKEN',
   'WORKBENCH_QUEUES=payments,platform,legacy',
 ]) {
   if (!minikubeDeploy.includes(required)) fail(`Minikube legacy runtime wiring missing: ${required}`);
 }
 const workbenchMonitoring = read('kubernetes/monitoring-workbench.yaml');
+if (!workbenchMonitoring.includes('bearerTokenSecret')) fail('Workbench metrics scraping must use a bearer token');
 for (const metric of ['workbench_legacy_batch_processing', 'workbench_legacy_batch_rejected', 'workbench_legacy_batch_failed']) {
   if (!workbenchMonitoring.includes(metric)) fail(`Legacy batch alert missing: ${metric}`);
+}
+if (!read('kubernetes/monitoring-ledger-core.yaml').includes('bearerTokenSecret')) {
+  fail('Ledger-core metrics scraping must use a bearer token');
 }
 
 if (failures.length > 0) {

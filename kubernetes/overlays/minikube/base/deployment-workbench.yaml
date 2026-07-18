@@ -31,6 +31,14 @@ spec:
           env:
             - name: LEDGER_CORE_URL
               value: http://ledger-core
+            - name: WORKBENCH_JOB_RECEIPT_STORE
+              value: postgres
+            - name: WORKBENCH_PAYMENT_PROCESS_STORE
+              value: postgres
+            - name: WORKBENCH_LEGACY_BATCH_STORE
+              value: postgres
+            - name: WORKBENCH_QUEUES
+              value: payments,platform,legacy
           livenessProbe:
             httpGet:
               path: /api/health
