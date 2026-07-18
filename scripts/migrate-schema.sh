@@ -21,6 +21,7 @@ DATABASE_URL=${WORKBENCH_MIGRATION_DATABASE_URL:?WORKBENCH_MIGRATION_DATABASE_UR
 PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/workbench database:provision-role
 DATABASE_URL=${SETTLEMENTS_MIGRATION_DATABASE_URL:?SETTLEMENTS_MIGRATION_DATABASE_URL is required} \
   PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/settlements prisma:migrate
+PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/settlements database:provision-role
 DATABASE_URL=${LEGACY_CONNECTORS_MIGRATION_DATABASE_URL:?LEGACY_CONNECTORS_MIGRATION_DATABASE_URL is required} \
   PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/legacy-connectors prisma:migrate
 PATH="$HOME/.local/share/pnpm:$PATH" "$PNPM_BIN" --filter @mavula/legacy-connectors database:provision-role

@@ -28,6 +28,8 @@ spec:
           envFrom:
             - secretRef:
                 name: workbench-secrets
+            - secretRef:
+                name: workbench-metrics-secrets
           env:
             - name: LEDGER_CORE_URL
               value: http://ledger-core

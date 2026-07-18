@@ -18,7 +18,7 @@ spec:
       interval: 30s
       path: /api/metrics
       bearerTokenSecret:
-        name: ledger-core-secrets
+        name: ledger-core-metrics-secrets
         key: LEDGER_CORE_METRICS_TOKEN
 ---
 apiVersion: monitoring.coreos.com/v1

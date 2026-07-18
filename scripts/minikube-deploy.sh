@@ -33,6 +33,7 @@ required=(
   IDENTITY_DATABASE_URL IDENTITY_ISSUER IDENTITY_JWKS_JSON IDENTITY_COOKIE_KEYS
   LEDGER_CORE_DATABASE_URL LEDGER_CORE_DATABASE_ROLE_PASSWORD OIDC_AUTHORIZATION_ENDPOINT OIDC_JWKS_URI
   WORKBENCH_DATABASE_URL WORKBENCH_DATABASE_ROLE_PASSWORD SETTLEMENTS_DATABASE_URL
+  SETTLEMENTS_DATABASE_ROLE_PASSWORD
   WORKBENCH_OIDC_CLIENT_ID WORKBENCH_PRIVATE_JWK_JSON OIDC_TOKEN_ENDPOINT
   LEGACY_CONNECTORS_DATABASE_URL LEGACY_CONNECTORS_DATABASE_ROLE_PASSWORD
   LEDGER_CORE_METRICS_TOKEN WORKBENCH_METRICS_TOKEN
@@ -58,6 +59,7 @@ if [ "$REBUILD_IMAGES" = "true" ]; then
   docker build -t "${images[0]}" -f "$ROOT_DIR/packages/identity-access/Dockerfile.workspace" "$ROOT_DIR"
   docker build -t "${images[1]}" -f "$ROOT_DIR/packages/ledger-core/Dockerfile" "$ROOT_DIR"
   docker build -t "${images[2]}" -f "$ROOT_DIR/packages/workbench/Dockerfile" "$ROOT_DIR"
+  LOAD_IMAGES=true
 else
   for image_name in "${images[@]}"; do
     docker image inspect "$image_name" >/dev/null 2>&1 || {
@@ -94,6 +96,12 @@ secret_dir=$(mktemp -d)
 trap 'rm -rf "$secret_dir"' EXIT
 
 {
+  printf 'LEDGER_CORE_METRICS_TOKEN=%s\n' "$LEDGER_CORE_METRICS_TOKEN"
+} >"$secret_dir/ledger-core-metrics.env"
+{
+  printf 'WORKBENCH_METRICS_TOKEN=%s\n' "$WORKBENCH_METRICS_TOKEN"
+} >"$secret_dir/workbench-metrics.env"
+{
   printf 'NODE_ENV=development\nPORT=3020\n'
   printf 'DATABASE_URL=%s\n' "$IDENTITY_DATABASE_URL"
   printf 'IDENTITY_ISSUER=%s\n' "$IDENTITY_ISSUER"
@@ -114,7 +122,6 @@ trap 'rm -rf "$secret_dir"' EXIT
   printf 'LEDGER_CORE_IDEMPOTENCY_RETENTION_DAYS=%s\n' "${LEDGER_CORE_IDEMPOTENCY_RETENTION_DAYS:-365}"
   printf 'LEDGER_CORE_IDEMPOTENCY_CLEANUP_INTERVAL_MS=%s\n' "${LEDGER_CORE_IDEMPOTENCY_CLEANUP_INTERVAL_MS:-3600000}"
   printf 'LEDGER_CORE_IDEMPOTENCY_CLEANUP_BATCH_SIZE=%s\n' "${LEDGER_CORE_IDEMPOTENCY_CLEANUP_BATCH_SIZE:-500}"
-  printf 'LEDGER_CORE_METRICS_TOKEN=%s\n' "$LEDGER_CORE_METRICS_TOKEN"
 } >"$secret_dir/ledger-core.env"
 {
   printf 'NODE_ENV=development\nPORT=3010\n'
@@ -134,7 +141,6 @@ trap 'rm -rf "$secret_dir"' EXIT
   printf 'WORKBENCH_LEGACY_BATCH_STORE=postgres\n'
   printf 'WORKBENCH_JOB_RECEIPT_STORE=postgres\n'
   printf 'WORKBENCH_JOB_RECEIPT_RETENTION_DAYS=%s\n' "${WORKBENCH_JOB_RECEIPT_RETENTION_DAYS:-365}"
-  printf 'WORKBENCH_METRICS_TOKEN=%s\n' "$WORKBENCH_METRICS_TOKEN"
   printf 'SETTLEMENTS_OUTBOX_ENABLED=false\nSETTLEMENTS_OUTBOX_PUBLISHER_ENABLED=false\n'
 } >"$secret_dir/workbench.env"
 chmod 600 "$secret_dir"/*.env
@@ -144,12 +150,14 @@ for service_name in identity-access ledger-core workbench; do
     --namespace "$NAMESPACE" --from-env-file="$secret_dir/$service_name.env" \
     --dry-run=client -o yaml | kubectl --context "$CONTEXT" apply -f -
 done
+for service_name in ledger-core workbench; do
+  kubectl --context "$CONTEXT" create secret generic "$service_name-metrics-secrets" \
+    --namespace "$NAMESPACE" --from-env-file="$secret_dir/$service_name-metrics.env" \
+    --dry-run=client -o yaml | kubectl --context "$CONTEXT" apply -f -
+done
 
-kubectl kustomize --load-restrictor=LoadRestrictionsNone \
-  "$ROOT_DIR/packages/operations/kubernetes/overlays/minikube" | kubectl --context "$CONTEXT" apply -f -
-kubectl --context "$CONTEXT" set image deployment/identity-access "identity-access=${images[0]}" -n "$NAMESPACE"
-kubectl --context "$CONTEXT" set image deployment/ledger-core "ledger-core=${images[1]}" -n "$NAMESPACE"
-kubectl --context "$CONTEXT" set image deployment/workbench "workbench=${images[2]}" -n "$NAMESPACE"
+kubectl --context "$CONTEXT" apply -f "$ROOT_DIR/packages/operations/kubernetes/overlays/minikube/postgres.yaml"
+kubectl --context "$CONTEXT" apply -f "$ROOT_DIR/packages/operations/kubernetes/overlays/minikube/redis.yaml"
 kubectl --context "$CONTEXT" rollout status statefulset/postgres -n "$NAMESPACE" --timeout=180s
 kubectl --context "$CONTEXT" rollout status statefulset/redis -n "$NAMESPACE" --timeout=180s
 
@@ -170,6 +178,9 @@ WORKBENCH_DATABASE_ROLE_PASSWORD="$WORKBENCH_DATABASE_ROLE_PASSWORD" \
   pnpm --dir "$ROOT_DIR" --filter @mavula/workbench --fail-if-no-match database:provision-role
 DATABASE_URL="$LOCAL_MIGRATION_DATABASE_URL?schema=settlements" \
   pnpm --dir "$ROOT_DIR" --filter @mavula/settlements --fail-if-no-match prisma:migrate
+SETTLEMENTS_MIGRATION_DATABASE_URL="$LOCAL_MIGRATION_DATABASE_URL?schema=settlements" \
+SETTLEMENTS_DATABASE_ROLE_PASSWORD="$SETTLEMENTS_DATABASE_ROLE_PASSWORD" \
+  pnpm --dir "$ROOT_DIR" --filter @mavula/settlements --fail-if-no-match database:provision-role
 DATABASE_URL="$LOCAL_MIGRATION_DATABASE_URL?schema=legacy_connectors" \
   pnpm --dir "$ROOT_DIR" --filter @mavula/legacy-connectors --fail-if-no-match prisma:migrate
 LEGACY_CONNECTORS_MIGRATION_DATABASE_URL="$LOCAL_MIGRATION_DATABASE_URL?schema=legacy_connectors" \
@@ -184,6 +195,12 @@ LEDGER_CORE_DATABASE_ROLE_PASSWORD="$LEDGER_CORE_DATABASE_ROLE_PASSWORD" \
   pnpm --dir "$ROOT_DIR" --filter @mavula/ledger-core database:provision-role
 kill "$FORWARD_PID" >/dev/null 2>&1 || true
 trap 'rm -rf "$secret_dir"' EXIT
+
+kubectl kustomize --load-restrictor=LoadRestrictionsNone \
+  "$ROOT_DIR/packages/operations/kubernetes/overlays/minikube" | kubectl --context "$CONTEXT" apply -f -
+kubectl --context "$CONTEXT" set image deployment/identity-access "identity-access=${images[0]}" -n "$NAMESPACE"
+kubectl --context "$CONTEXT" set image deployment/ledger-core "ledger-core=${images[1]}" -n "$NAMESPACE"
+kubectl --context "$CONTEXT" set image deployment/workbench "workbench=${images[2]}" -n "$NAMESPACE"
 
 for deployment_name in identity-access ledger-core workbench; do
   kubectl --context "$CONTEXT" rollout status "deployment/$deployment_name" -n "$NAMESPACE" --timeout=180s

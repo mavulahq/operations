@@ -7,7 +7,7 @@ kubectl apply -f "$BASE_DIR/namespace.yaml"
 if [ "${APPLY_EXTERNAL_SECRETS:-false}" = "true" ]; then
   kubectl apply -f "$BASE_DIR/secrets-external.yaml"
 else
-  for secret_name in identity-access-secrets ledger-core-secrets workbench-secrets; do
+  for secret_name in identity-access-secrets ledger-core-secrets ledger-core-metrics-secrets workbench-secrets workbench-metrics-secrets; do
     kubectl get secret "$secret_name" -n mavula >/dev/null 2>&1 || {
       echo "$secret_name is required; provision it before applying runtime deployments" >&2
       exit 1

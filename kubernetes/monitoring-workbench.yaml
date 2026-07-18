@@ -14,7 +14,7 @@ spec:
       interval: 30s
       path: /api/metrics
       bearerTokenSecret:
-        name: workbench-secrets
+        name: workbench-metrics-secrets
         key: WORKBENCH_METRICS_TOKEN
 ---
 apiVersion: monitoring.coreos.com/v1
