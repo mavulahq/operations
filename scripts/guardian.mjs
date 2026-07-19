@@ -121,6 +121,18 @@ for (const required of ['ledger-core-metrics-secrets', 'workbench-metrics-secret
   if (!read('kubernetes/secrets-external.yaml').includes(required)) fail(`ExternalSecret missing: ${required}`);
 }
 
+const secretFiles = spawnSync("git", ["ls-files", "kubernetes/*-secret.yaml"], { encoding: "utf8" });
+if (secretFiles.status !== 0) fail("git ls-files for secret templates failed");
+for (const file of secretFiles.stdout.split("\n").filter(Boolean)) {
+  if (file.startsWith("kubernetes/overlays/minikube/")) continue;
+  const contents = read(file);
+  if (contents.includes("mavula_dev")) fail(`${file} must not contain mavula_dev credentials`);
+  if (contents.includes("getfluxo_dev")) fail(`${file} must not contain getfluxo_dev credentials`);
+  if (/postgresql:\/\/[^/\s"']+:[^/\s"']+@/i.test(contents)) {
+    fail(`${file} must not embed postgresql credentials; use REPLACE_WITH_* placeholders`);
+  }
+}
+
 if (failures.length > 0) {
   console.error("MAVULA operations guardian failed:");
   for (const failure of failures) console.error(`- ${failure}`);

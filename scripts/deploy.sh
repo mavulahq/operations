@@ -20,9 +20,10 @@ fi
 if [ "$APPLY_EXTERNAL_SECRETS" = "true" ]; then
   "${KUBECTL[@]}" apply -f "$ROOT_DIR/kubernetes/secrets-external.yaml"
 else
-  for secret_name in identity-access-secrets ledger-core-secrets workbench-secrets; do
+  for secret_name in identity-access-secrets ledger-core-secrets ledger-core-metrics-secrets workbench-secrets workbench-metrics-secrets; do
     if ! "${KUBECTL[@]}" get secret "$secret_name" -n mavula >/dev/null 2>&1; then
-      echo "Warning: $secret_name not found. Run scripts/setup-secrets.sh or set APPLY_EXTERNAL_SECRETS=true."
+      echo "$secret_name is required; provision it before applying runtime deployments (or set APPLY_EXTERNAL_SECRETS=true)." >&2
+      exit 1
     fi
   done
 fi
